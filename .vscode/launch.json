@@ -7,7 +7,7 @@
             "request": "launch",
             "mode": "auto",
             "program": "./",
-            "args": ["offline", "-file", "./samples/simple/simple-api.tf", "-module", "simple_api"]
+            "args": ["offline", "-file", "C:/Git/my.mojo.monorepo/api/applications-api/terraform/api.tf", "-module", "applications_api"]
         },
         {
             "name": "Attach Node",

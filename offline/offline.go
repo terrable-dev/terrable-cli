@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"path/filepath"
 	"strings"
 	"sync"
 
@@ -22,7 +21,7 @@ func Run(filePath string, moduleName string, port string) error {
 
 	// TODO: Validate config
 
-	tomlConfig, err := config.ParseTerrableToml(filepath.Dir(filePath))
+	tomlConfig, err := config.ParseTerrableToml()
 
 	if err != nil {
 		panic(fmt.Errorf("error parsing .terrable.toml file: %w", err))

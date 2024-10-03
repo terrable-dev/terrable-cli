@@ -154,6 +154,8 @@ func generateHandlerRuntimeCode(handler *HandlerInstance, r *http.Request) strin
 			process.env[envKey] = env[envKey];
 		}
 
+		process.env["AWS_REGION"] = "eu-west-1";
+
 		delete require.cache[require.resolve('%s')];
 		var transpiledFunction = require('%s');
 		
