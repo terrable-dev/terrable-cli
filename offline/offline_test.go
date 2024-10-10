@@ -38,7 +38,7 @@ func TestPrintConfig(t *testing.T) {
 	os.Stdout = w
 
 	// Call the function
-	printConfig(testConfig, "1234")
+	printConfig(testConfig, 1234)
 
 	// Restore stdout
 	w.Close()

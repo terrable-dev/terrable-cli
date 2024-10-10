@@ -1,6 +1,0 @@
-[environment]
-TEST_VAR = "hello world"
-
-[offline]
-file = "simple-api.tf"
-module = "simple_api"

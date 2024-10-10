@@ -19,11 +19,11 @@ func main() {
 				Name:  "offline",
 				Usage: "",
 				Action: func(cCtx *cli.Context) error {
-					executablePath, _ := os.Getwd()
-					tomlConfig, _ := config.ParseTerrableToml(executablePath)
+					tomlConfig, _ := config.ParseTerrableToml()
 
 					filePath := cCtx.String("file")
 					moduleName := cCtx.String("module")
+					port := cCtx.String("port")
 
 					if filePath == "" {
 						filePath = tomlConfig.Offline.File
@@ -33,7 +33,10 @@ func main() {
 						moduleName = tomlConfig.Offline.Module
 					}
 
-					port := cCtx.String("port")
+					if port == "" {
+						port = tomlConfig.Offline.Port
+					}
+
 					err := offline.Run(filePath, moduleName, port)
 
 					if err != nil {
@@ -59,7 +62,6 @@ func main() {
 						Name:     "port",
 						Aliases:  []string{"p"},
 						Required: false,
-						Value:    "8080",
 						Usage:    "The port number that the local instance of the API should listen for requests at",
 					},
 				},

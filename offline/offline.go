@@ -3,8 +3,8 @@ package offline
 import (
 	"fmt"
 	"log"
+	"net"
 	"net/http"
-	"path/filepath"
 	"strings"
 	"sync"
 
@@ -22,43 +22,86 @@ func Run(filePath string, moduleName string, port string) error {
 
 	// TODO: Validate config
 
-	tomlConfig, err := config.ParseTerrableToml(filepath.Dir(filePath))
+	tomlConfig, err := config.ParseTerrableToml()
 
 	if err != nil {
 		panic(fmt.Errorf("error parsing .terrable.toml file: %w", err))
 	}
 
-	printConfig(*terrableConfig, port)
+	listener, activePort, err := getListener(port)
+
+	if err != nil {
+		return err
+	}
+
+	defer listener.Close()
+
+	printConfig(*terrableConfig, activePort)
 
 	var wg sync.WaitGroup
-	defer wg.Done()
+	defer wg.Wait()
 
 	r := mux.NewRouter()
 
+	// Start compiling and serving each handler
 	for _, handler := range terrableConfig.Handlers {
-		go ServeHandler(&HandlerInstance{
-			handlerConfig: handler,
-			envVars:       tomlConfig.Environment,
-		}, r)
+		wg.Add(1)
+
+		go func(handler config.HandlerMapping) {
+			defer wg.Done()
+
+			ServeHandler(&HandlerInstance{
+				handlerConfig: handler,
+				envVars:       tomlConfig.Environment,
+			}, r)
+		}(handler)
 	}
 
-	fmt.Printf("Starting server on :%s\n", port)
+	fmt.Printf("Starting server on :%d\n", activePort)
 
-	if err := http.ListenAndServe(fmt.Sprintf("127.0.0.1:%s", port), r); err != nil {
-		return fmt.Errorf("could not start server on port %s. Error: %s", port, err.Error())
+	server := &http.Server{
+		Handler: r,
+	}
+
+	if err := server.Serve(listener); err != nil && err != http.ErrServerClosed {
+		return fmt.Errorf("could not start server on port %d. Error: %w", activePort, err)
 	}
 
 	return nil
 }
 
-func printConfig(config config.TerrableConfig, port string) {
+func getListener(port string) (net.Listener, int, error) {
+	var specificPortDesired bool = (port != "")
+
+	if port == "" {
+		port = "8080"
+	}
+
+	listener, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%s", port))
+
+	if err != nil {
+		if specificPortDesired {
+			return nil, 0, fmt.Errorf("could not start server on specified port %s: %w", port, err)
+		}
+
+		// Try with a random free-port
+		listener, err = net.Listen("tcp", "127.0.0.1:0")
+		if err != nil {
+			return nil, 0, fmt.Errorf("could not start server on any available port: %w", err)
+		}
+	}
+
+	return listener, listener.Addr().(*net.TCPAddr).Port, nil
+}
+
+func printConfig(config config.TerrableConfig, port int) {
 	totalEndpoints := 0
 	printlines := []string{}
 
 	for _, handler := range config.Handlers {
 		for method, path := range handler.Http {
 			totalEndpoints += 1
-			printlines = append(printlines, fmt.Sprintf("   %-*s http://localhost:%s%s\n", 5, method, port, path))
+			printlines = append(printlines, fmt.Sprintf("   %-*s http://localhost:%d%s\n", 5, method, port, path))
 		}
 	}
 

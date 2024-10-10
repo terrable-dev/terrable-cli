@@ -1,4 +1,4 @@
-GET http://127.0.0.1:8080/?firstQuery=123&secondQuery=hello
+GET http://127.0.0.1:8081/?firstQuery=123&secondQuery=hello
 HTTP 200
 
 [Asserts]

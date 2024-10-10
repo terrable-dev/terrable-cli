@@ -1,4 +1,4 @@
-GET http://127.0.0.1:8080/delayed
+GET http://127.0.0.1:8081/delayed
 
 HTTP 200
 [Asserts]
